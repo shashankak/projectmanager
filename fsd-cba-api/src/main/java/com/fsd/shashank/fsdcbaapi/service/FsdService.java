@@ -16,4 +16,10 @@ public interface FsdService {
 
     Boolean deleteUser(Integer userId);
 
+    ProjectDto saveProject(ProjectDto projectDto);
+
+    List<ProjectDto> getAllProjects();
+
+    Boolean deleteProject(Integer projectId);
+
 }

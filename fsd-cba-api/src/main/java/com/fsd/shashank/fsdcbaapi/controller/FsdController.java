@@ -69,4 +69,40 @@ public class FsdController {
         }
         return response;
     }
+
+    @RequestMapping(path = "saveProject", method = RequestMethod.POST)
+    public ResponseDto saveProject(@RequestBody ProjectDto projectDto) {
+        ResponseDto response = new ResponseDto();
+        response = createFailureResponse();
+        try {
+            projectDto = fsdService.saveProject(projectDto);
+            response = createSuccessResponse(projectDto);
+        } catch (Exception e) {
+            // Nothing to throw.
+            logger.error("There was error while saving project: " + projectDto.getProject() + " Cause: " + e.getMessage());
+        }
+        return response;
+    }
+
+    @RequestMapping(path = "getAllProjects", method = RequestMethod.GET)
+    public ResponseDto getAllProjects() {
+        try {
+            return createSuccessResponse(fsdService.getAllProjects());
+        } catch (Exception e) {
+            logger.error("There was error while retriving all projects. Cause: " + e.getMessage());
+            return createFailureResponse();
+        }
+    }
+
+    @RequestMapping(path = "deleteProjectById/{projectId}", method = RequestMethod.DELETE)
+    public ResponseDto deleteProjectById(@PathVariable("projectId") Integer projectId) {
+        ResponseDto response = new ResponseDto();
+        response = createFailureResponse();
+        try {
+            response = createSuccessResponse(fsdService.deleteProject(projectId));
+        } catch (Exception e) {
+            logger.error("There was error while deleting project: " + projectId + " Cause: " + e.getMessage());
+        }
+        return response;
+    }
 }

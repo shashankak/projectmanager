@@ -25,6 +25,9 @@ public class FsdServiceImpl implements FsdService {
     @Autowired
     private UserRepo userRepo;
 
+    @Autowired
+    private ProjectRepo projectRepo;
+
     @Override
     public UserDto saveUser(UserDto userDto) {
         try {
@@ -65,6 +68,54 @@ public class FsdServiceImpl implements FsdService {
         return true;
     }
 
+    @Override
+    public ProjectDto saveProject(ProjectDto projectDto) {
+        try {
+            Project project = projectDtoToEntity(projectDto);
+            project = projectRepo.save(project);
+            projectDto.setProjectId(project.getProjectId());
+            User user = userRepo.findById(projectDto.getManager().getUserId()).get();
+            user.setProject(project);
+            user = userRepo.save(user);
+        } catch (Exception e) {
+            throw e;
+        }
+        return projectDto;
+    }
+
+    @Override
+    public List<ProjectDto> getAllProjects() {
+        List<ProjectDto> projectDtos = new ArrayList<>();
+        try {
+            List<Project> projects = (List<Project>) projectRepo.findAll();
+            for (Project project : projects) {
+                projectDtos.add(projectEntityToDto(project));
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return projectDtos;
+    }
+
+    @Override
+    public Boolean deleteProject(Integer projectId) {
+        try {
+            if (projectId == null || projectId <= 0) {
+                throw new RuntimeException("Invalid UserID");
+            }
+            Project project = projectRepo.findById(projectId).get();
+            User user = userRepo.findByProject(project);
+            if (user != null) {
+                user.setProject(null);
+                user = userRepo.save(user);
+            }
+            projectRepo.delete(project);
+        } catch (Exception e) {
+            throw e;
+        }
+        return true;
+    }
+
     private User userDtoToEntity(UserDto userDto) {
         User user = new User();
 
@@ -86,5 +137,47 @@ public class FsdServiceImpl implements FsdService {
         userDto.setLastName(user.getLastName());
         userDto.setEmployeeId(user.getEmployeeId());
         return userDto;
+    }
+
+    private ProjectDto projectEntityToDto(Project project) {
+        ProjectDto projectDto = new ProjectDto();
+
+        projectDto.setProjectId(project.getProjectId());
+        projectDto.setProject(project.getProject());
+        projectDto.setPriority(project.getPriority());
+        projectDto.setStartDate(DateConverter.convert(project.getStartDate()));
+        projectDto.setEndDate(DateConverter.convert(project.getEndDate()));
+
+        projectDto.setManager(userEntityToDto(userRepo.findByProject(project)));
+
+        projectDto.setCompleted(project.getEndDate() != null ? (project.getEndDate().compareTo(new Date()) == -1) : false);
+
+        int completedTasks = 0;
+        for (Task task : project.getTasks()) {
+            if (task.getEndDate() != null ? (task.getEndDate().compareTo(new Date()) == -1) : false) {
+                completedTasks = completedTasks + 1;
+            }
+        }
+        projectDto.setNoOfCompletedTasks(completedTasks);
+        projectDto.setNoOfTasks(project.getTasks().size());
+        projectDto.setStartDateIsEndDate(project.getEndDate() != null ? (project.getEndDate().compareTo(new Date()) == 0) : false);
+
+        return projectDto;
+    }
+
+    private Project projectDtoToEntity(ProjectDto projectDto) {
+
+        Project project = new Project();
+        project.setProjectId(projectDto.getProjectId());
+        project.setProject(projectDto.getProject());
+        project.setPriority(projectDto.getPriority());
+        project.setStartDate(DateConverter.convert(projectDto.getStartDate()));
+        if (projectDto.getStartDateIsEndDate()) {
+            project.setEndDate(DateConverter.convert(projectDto.getStartDate()));
+        } else {
+            project.setEndDate(DateConverter.convert(projectDto.getEndDate()));
+        }
+
+        return project;
     }
 }
