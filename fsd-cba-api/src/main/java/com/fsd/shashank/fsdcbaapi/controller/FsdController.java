@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
+@CrossOrigin
 public class FsdController {
     public static final String FAILURE = "failure";
     public static final String SUCCESS = "success";
