@@ -1,8 +1,11 @@
 package com.fsd.shashank.fsdcbaapi.dto;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class ProjectDto {
     private Integer projectId;
     private String project;

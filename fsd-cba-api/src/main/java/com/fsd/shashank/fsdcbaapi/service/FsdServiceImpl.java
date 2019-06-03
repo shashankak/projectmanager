@@ -28,6 +28,12 @@ public class FsdServiceImpl implements FsdService {
     @Autowired
     private ProjectRepo projectRepo;
 
+    @Autowired
+    private TaskRepo taskRepo;
+
+    @Autowired
+    private ParentTaskRepo parentTaskRepo;
+
     @Override
     public UserDto saveUser(UserDto userDto) {
         try {
@@ -116,6 +122,47 @@ public class FsdServiceImpl implements FsdService {
         return true;
     }
 
+    @Override
+    public TaskDto saveTask(TaskDto taskDto) {
+        try {
+            ParentTask parentTask = parentTaskDtoToEntity(taskDto);
+            parentTaskRepo.save(parentTask);
+            Task task = taskDtoToEntity(taskDto);
+            task = taskRepo.save(task);
+            taskDto.setTaskId(task.getTaskId());
+        } catch (Exception e) {
+            throw e;
+        }
+        return taskDto;
+    }
+
+    @Override
+    public List<TaskDto> getAllTasks() {
+        List<TaskDto> taskDtos = new ArrayList<>();
+        try {
+            List<Task> tasks = (List<Task>) taskRepo.findAll();
+            for (Task task : tasks) {
+                taskDtos.add(taskEntityToDto(task));
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return taskDtos;
+    }
+
+    @Override
+    public Boolean deleteTask(Integer taskId) {
+        try {
+            if (taskId == null || taskId <= 0) {
+                throw new RuntimeException("Invalid taskId");
+            }
+            taskRepo.deleteById(taskId);
+        } catch (Exception e) {
+            throw e;
+        }
+        return true;
+    }
+
     private User userDtoToEntity(UserDto userDto) {
         User user = new User();
 
@@ -179,5 +226,65 @@ public class FsdServiceImpl implements FsdService {
         }
 
         return project;
+    }
+
+    private TaskDto taskEntityToDto(Task task) {
+        TaskDto taskDto = new TaskDto();
+
+        taskDto.setTaskId(task.getTaskId());
+        taskDto.setTask(task.getTask());
+        taskDto.setEndDate(DateConverter.convert(task.getEndDate()));
+        if (task.getParent() != null) {
+            taskDto.setParentTask(new TaskDto(task.getParent().getTaskId(), task.getParent().getTask()));
+        }
+        taskDto.setPriority(task.getPriority());
+        taskDto.setStartDate(DateConverter.convert(task.getStartDate()));
+        taskDto.setStatus(task.getStatus());
+        if (task.getProject() != null) {
+            taskDto.setProjectDto(projectEntityToDto(task.getProject()));
+        }
+        taskDto.setUserDto(userEntityToDto(userRepo.findByTask(task)));
+        ParentTask parentTask = parentTaskRepo.findFirstByParentTask(task.getTask());
+        if (parentTask != null) {
+            taskDto.setThisIsParent(true);
+        } else {
+            taskDto.setThisIsParent(false);
+        }
+
+        return taskDto;
+    }
+
+    private Task taskDtoToEntity(TaskDto taskDto) {
+        Task task = new Task();
+
+        task.setTaskId(taskDto.getTaskId());
+        task.setTask(taskDto.getTask());
+        task.setEndDate(DateConverter.convert(taskDto.getEndDate()));
+        if (taskDto.getParentTask() != null && taskDto.getParentTask().getTaskId() != null) {
+            task.setParent(taskRepo.findById(taskDto.getParentTask().getTaskId()).get());
+        }
+        task.setPriority(taskDto.getPriority());
+        task.setProject(projectRepo.findById(taskDto.getProjectDto().getProjectId()).get());
+        task.setStartDate(DateConverter.convert(taskDto.getStartDate()));
+        task.setStatus(taskDto.getStatus());
+
+        return task;
+    }
+
+    private ParentTask parentTaskDtoToEntity(TaskDto taskDto) {
+        ParentTask parentTask = null;
+
+        if (taskDto.getThisIsParent() != null && taskDto.getThisIsParent()) {
+            parentTask = new ParentTask();
+            parentTask.setParentTask(taskDto.getTask());
+        } else {
+            parentTask = parentTaskRepo.findFirstByParentTask(taskDto.getTask());
+            if (parentTask == null) {
+                parentTask = new ParentTask();
+                parentTask.setParentTask(taskDto.getTask());
+            }
+
+        }
+        return parentTask;
     }
 }

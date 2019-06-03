@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@CrossOrigin
 public class FsdController {
     public static final String FAILURE = "failure";
     public static final String SUCCESS = "success";
@@ -103,6 +102,42 @@ public class FsdController {
             response = createSuccessResponse(fsdService.deleteProject(projectId));
         } catch (Exception e) {
             logger.error("There was error while deleting project: " + projectId + " Cause: " + e.getMessage());
+        }
+        return response;
+    }
+
+    @RequestMapping(path = "saveTask", method = RequestMethod.POST)
+    public ResponseDto saveTask(@RequestBody TaskDto taskDto) {
+        ResponseDto response = new ResponseDto();
+        response = createFailureResponse();
+        try {
+            taskDto = fsdService.saveTask(taskDto);
+            response = createSuccessResponse(taskDto);
+        } catch (Exception e) {
+            // Nothing to throw.
+            logger.error("There was error while saving task: " + taskDto.getTask() + " Cause: " + e.getMessage());
+        }
+        return response;
+    }
+
+    @RequestMapping(path = "getAllTasks", method = RequestMethod.GET)
+    public ResponseDto getAllTasks() {
+        try {
+            return createSuccessResponse(fsdService.getAllTasks());
+        } catch (Exception e) {
+            logger.error("There was error while retriving all tasks. Cause: " + e.getMessage());
+            return createFailureResponse();
+        }
+    }
+
+    @RequestMapping(path = "deleteTaskById/{taskId}", method = RequestMethod.DELETE)
+    public ResponseDto deleteTaskById(@PathVariable("taskId") Integer taskId) {
+        ResponseDto response = new ResponseDto();
+        response = createFailureResponse();
+        try {
+            response = createSuccessResponse(fsdService.deleteTask(taskId));
+        } catch (Exception e) {
+            logger.error("There was error while deleting task: " + taskId + " Cause: " + e.getMessage());
         }
         return response;
     }

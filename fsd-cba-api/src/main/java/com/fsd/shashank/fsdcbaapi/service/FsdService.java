@@ -22,4 +22,10 @@ public interface FsdService {
 
     Boolean deleteProject(Integer projectId);
 
+    TaskDto saveTask(TaskDto taskDto);
+
+    List<TaskDto> getAllTasks();
+
+    public Boolean deleteTask(Integer taskId);
+
 }
