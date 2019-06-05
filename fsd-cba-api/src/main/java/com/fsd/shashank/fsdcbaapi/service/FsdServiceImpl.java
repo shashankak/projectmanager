@@ -49,15 +49,33 @@ public class FsdServiceImpl implements FsdService {
     public List<UserDto> getAllUsers() {
         List<UserDto> userDtos = new ArrayList<>();
 
-        try {
-            List<User> users = (List<User>) userRepo.findAll();
-            for (User user : users) {
-                userDtos.add(userEntityToDto(user));
-            }
-        } catch (Exception e) {
-            throw e;
+        List<User> users = (List<User>) userRepo.findAll();
+        for (User user : users) {
+            userDtos.add(userEntityToDto(user));
         }
 
+        return userDtos;
+    }
+
+    @Override
+    public List<UserDto> getAvailableManagers() {
+        List<UserDto> userDtos = new ArrayList<>();
+
+        List<User> users = (List<User>) userRepo.findAllByProjectIsNull();
+        for (User user : users) {
+            userDtos.add(userEntityToDto(user));
+        }
+
+        return userDtos;
+    }
+
+    @Override
+    public List<UserDto> getAvailableUsersForTask() {
+        List<UserDto> userDtos = new ArrayList<>();
+        List<User> users = (List<User>) userRepo.findAllByTaskIsNull();
+        for (User user : users) {
+            userDtos.add(userEntityToDto(user));
+        }
         return userDtos;
     }
 
@@ -80,9 +98,16 @@ public class FsdServiceImpl implements FsdService {
             Project project = projectDtoToEntity(projectDto);
             project = projectRepo.save(project);
             projectDto.setProjectId(project.getProjectId());
-            User user = userRepo.findById(projectDto.getManager().getUserId()).get();
-            user.setProject(project);
-            user = userRepo.save(user);
+            User user = userRepo.findByProject(project);
+            if (user != null) {
+                user.setProject(null);
+                user = userRepo.save(user);
+            }
+            user = userRepo.findById(projectDto.getManagerId()).get();
+            if (user != null) {
+                user.setProject(project);
+                user = userRepo.save(user);
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -126,9 +151,22 @@ public class FsdServiceImpl implements FsdService {
     public TaskDto saveTask(TaskDto taskDto) {
         try {
             ParentTask parentTask = parentTaskDtoToEntity(taskDto);
-            parentTaskRepo.save(parentTask);
+            if (parentTask != null)
+                parentTaskRepo.save(parentTask);
             Task task = taskDtoToEntity(taskDto);
             task = taskRepo.save(task);
+            User user = userRepo.findByTask(task);
+            if (user != null) {
+                user.setTask(null);
+                user = userRepo.save(user);
+            }
+            if (taskDto.getUserId() != null) {
+                user = userRepo.findById(taskDto.getUserId()).get();
+            }
+            if (user != null) {
+                user.setTask(task);
+                user = userRepo.save(user);
+            }
             taskDto.setTaskId(task.getTaskId());
         } catch (Exception e) {
             throw e;
@@ -151,16 +189,14 @@ public class FsdServiceImpl implements FsdService {
     }
 
     @Override
-    public Boolean deleteTask(Integer taskId) {
+    public TaskDto getTaskById(Integer taskId) {
+        TaskDto taskDto;
         try {
-            if (taskId == null || taskId <= 0) {
-                throw new RuntimeException("Invalid taskId");
-            }
-            taskRepo.deleteById(taskId);
+            taskDto = taskEntityToDto(taskRepo.findById(taskId).get());
         } catch (Exception e) {
             throw e;
         }
-        return true;
+        return taskDto;
     }
 
     private User userDtoToEntity(UserDto userDto) {
@@ -196,18 +232,22 @@ public class FsdServiceImpl implements FsdService {
         projectDto.setEndDate(DateConverter.convert(project.getEndDate()));
 
         projectDto.setManager(userEntityToDto(userRepo.findByProject(project)));
+        projectDto.setManagerId(projectDto.getManager() != null ? projectDto.getManager().getUserId() : null);
 
         projectDto.setCompleted(project.getEndDate() != null ? (project.getEndDate().compareTo(new Date()) == -1) : false);
 
         int completedTasks = 0;
+        List<TaskDto> taskDtos = new ArrayList<>();
         for (Task task : project.getTasks()) {
-            if (task.getEndDate() != null ? (task.getEndDate().compareTo(new Date()) == -1) : false) {
+            taskDtos.add(taskEntityToDto(task));
+            if (task.getStatus() != null && task.getStatus().equalsIgnoreCase("completed")) {
                 completedTasks = completedTasks + 1;
             }
         }
+        projectDto.setTasks(taskDtos);
         projectDto.setNoOfCompletedTasks(completedTasks);
         projectDto.setNoOfTasks(project.getTasks().size());
-        projectDto.setStartDateIsEndDate(project.getEndDate() != null ? (project.getEndDate().compareTo(new Date()) == 0) : false);
+        projectDto.setSetStartAndEndDate(project.getEndDate() != null ? (project.getEndDate().compareTo(new Date()) == 0) : false);
 
         return projectDto;
     }
@@ -219,11 +259,7 @@ public class FsdServiceImpl implements FsdService {
         project.setProject(projectDto.getProject());
         project.setPriority(projectDto.getPriority());
         project.setStartDate(DateConverter.convert(projectDto.getStartDate()));
-        if (projectDto.getStartDateIsEndDate()) {
-            project.setEndDate(DateConverter.convert(projectDto.getStartDate()));
-        } else {
-            project.setEndDate(DateConverter.convert(projectDto.getEndDate()));
-        }
+        project.setEndDate(DateConverter.convert(projectDto.getEndDate()));
 
         return project;
     }
@@ -235,15 +271,23 @@ public class FsdServiceImpl implements FsdService {
         taskDto.setTask(task.getTask());
         taskDto.setEndDate(DateConverter.convert(task.getEndDate()));
         if (task.getParent() != null) {
-            taskDto.setParentTask(new TaskDto(task.getParent().getTaskId(), task.getParent().getTask()));
+            taskDto.setParentTaskId(task.getParent().getTaskId());
+            taskDto.setParentTaskName(task.getParent().getTask());
         }
         taskDto.setPriority(task.getPriority());
         taskDto.setStartDate(DateConverter.convert(task.getStartDate()));
         taskDto.setStatus(task.getStatus());
         if (task.getProject() != null) {
-            taskDto.setProjectDto(projectEntityToDto(task.getProject()));
+            taskDto.setProjectId(task.getProject().getProjectId());
+            taskDto.setProjectName(task.getProject().getProject());
         }
-        taskDto.setUserDto(userEntityToDto(userRepo.findByTask(task)));
+        User user = userRepo.findByTask(task);
+        if (user != null) {
+            taskDto.setUserId(user.getUserId());
+            taskDto.setUserFirstName(user.getFirstName());
+            taskDto.setUserLastName(user.getLastName());
+        }
+
         ParentTask parentTask = parentTaskRepo.findFirstByParentTask(task.getTask());
         if (parentTask != null) {
             taskDto.setThisIsParent(true);
@@ -260,11 +304,11 @@ public class FsdServiceImpl implements FsdService {
         task.setTaskId(taskDto.getTaskId());
         task.setTask(taskDto.getTask());
         task.setEndDate(DateConverter.convert(taskDto.getEndDate()));
-        if (taskDto.getParentTask() != null && taskDto.getParentTask().getTaskId() != null) {
-            task.setParent(taskRepo.findById(taskDto.getParentTask().getTaskId()).get());
+        if (taskDto.getParentTaskId() != null) {
+            task.setParent(taskRepo.findById(taskDto.getParentTaskId()).get());
         }
         task.setPriority(taskDto.getPriority());
-        task.setProject(projectRepo.findById(taskDto.getProjectDto().getProjectId()).get());
+        task.setProject(projectRepo.findById(taskDto.getProjectId()).get());
         task.setStartDate(DateConverter.convert(taskDto.getStartDate()));
         task.setStatus(taskDto.getStatus());
 
@@ -279,11 +323,6 @@ public class FsdServiceImpl implements FsdService {
             parentTask.setParentTask(taskDto.getTask());
         } else {
             parentTask = parentTaskRepo.findFirstByParentTask(taskDto.getTask());
-            if (parentTask == null) {
-                parentTask = new ParentTask();
-                parentTask.setParentTask(taskDto.getTask());
-            }
-
         }
         return parentTask;
     }

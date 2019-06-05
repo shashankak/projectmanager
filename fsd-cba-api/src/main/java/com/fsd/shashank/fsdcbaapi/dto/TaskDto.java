@@ -9,15 +9,22 @@ import lombok.Setter;
 @Setter
 public class TaskDto {
     private Integer taskId;
-    private ProjectDto projectDto;
+    // private ProjectDto projectDto;
+    private Integer projectId;
+    private String projectName;
     private String task;
     private Boolean thisIsParent;
     private Integer priority;
-    private TaskDto parentTask;
+    // private TaskDto parentTask;
     private String startDate;
     private String endDate;
-    private UserDto userDto;
+    // private UserDto userDto;
+    private Integer userId;
+    private String userFirstName;
+    private String userLastName;
     private String status;
+    private Integer parentTaskId;
+    private String parentTaskName;
 
     public TaskDto() {
 
@@ -28,16 +35,16 @@ public class TaskDto {
         this.task = task;
     }
 
-    public TaskDto(Integer taskId, ProjectDto projectDto, String task, Boolean thisIsParent, Integer priority, TaskDto parentTask, String startDate, String endDate, UserDto userDto, String status) {
+    public TaskDto(Integer taskId, Integer projectId, String task, Boolean thisIsParent, Integer priority, Integer parentTaskId, String startDate, String endDate, Integer userId, String status) {
         this.taskId = taskId;
-        this.projectDto = projectDto;
+        this.projectId = projectId;
         this.task = task;
         this.thisIsParent = thisIsParent;
         this.priority = priority;
-        this.parentTask = parentTask;
+        this.parentTaskId = parentTaskId;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.userDto = userDto;
+        this.userId = userId;
         this.status = status;
     }
 }

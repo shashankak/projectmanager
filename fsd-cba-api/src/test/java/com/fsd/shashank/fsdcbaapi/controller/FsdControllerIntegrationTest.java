@@ -67,14 +67,17 @@ public class FsdControllerIntegrationTest {
     Task taskToDelete;
     Task taskWithParent;
     Task task;
+    Task taskToUpdate;
 
 
     @Before
     public void setup() {
-        userToDelete = userRepo.save(getMockUser(null, "Shashank", "Test", "10"));
-        manager = userRepo.save(getMockUser(null, "Sachin", "Tendulkar", "11"));
+        userToDelete = userRepo.save(getMockUser(null, "Shashank", "Test", "10", null, null));
+        manager = userRepo.save(getMockUser(null, "Sachin", "Tendulkar", "11", null, null));
+        // Non Manager Non Task
+        userRepo.save(getMockUser(null, "Test", "Test", "13", null, null));
         project = projectRepo.save(getMockProject(null, "Test Project",
-                DateConverter.convert("2019-01-01"), null, false, 1, null));
+                DateConverter.convert("2019-01-01"), null, false, 1, manager));
         projectRepo.save(getMockProject(null, "Test Project Two",
                 DateConverter.convert("2019-01-01"), DateConverter.convert("2019-01-01"), false, 1, null));
         projectRepo.save(getMockProject(null, "Test Project Two",
@@ -84,14 +87,15 @@ public class FsdControllerIntegrationTest {
         projectToDelete = projectRepo.save(getMockProject(null, "Test Project One",
                 new Date(), null, false, 2, manager));
         parentTask = parentTaskRepo.save(getMockParentTask(null, "Default Task"));
-        task = taskRepo.save(getMockTask(null, "Default Task", DateConverter.convert("2019-01-01"), null, 1, null, project, null));
-        taskRepo.save(getMockTask(null, "Task with same end date", DateConverter.convert("2019-01-01"), DateConverter.convert("2019-01-01"), 1, null, project, null));
+        task = taskRepo.save(getMockTask(null, "Default Task", DateConverter.convert("2019-01-01"), null, 1, "completed", project, null));
+        taskToUpdate = taskRepo.save(getMockTask(null, "Task with same end date", DateConverter.convert("2019-01-01"), DateConverter.convert("2019-01-01"), 1, null, project, null));
         taskRepo.save(getMockTask(null, "Task with greater end date", DateConverter.convert("2019-01-01"), DateConverter.convert("2019-02-01"), 1, null, project, null));
         taskRepo.save(getMockTask(null, "Task with future end date", DateConverter.convert("2019-01-01"), DateConverter.convert("2025-02-01"), 1, null, project, null));
         task = taskRepo.findById(task.getTaskId()).get();
         taskWithParent = taskRepo.save(getMockTask(null, "Default Task One", DateConverter.convert("2019-01-01"), null, 1, null, project, task));
         taskToDelete = taskRepo.save(getMockTask(null, "Default Task Two", DateConverter.convert("2019-01-01"), null, 1, null, project, null));
-
+        // With Task
+        userRepo.save(getMockUser(null, "Test Task", "Test", "14", taskToUpdate, project));
     }
 
     @Test
@@ -125,7 +129,25 @@ public class FsdControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.result", is("success")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data", hasSize(greaterThan(0))));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.dataList", hasSize(greaterThan(0))));
+    }
+
+    @Test
+    public void testAGetAvailableManagers() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/getAvailableManagers")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.result", is("success")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.dataList", hasSize(greaterThan(0))));
+    }
+
+    @Test
+    public void testAGetAvailableUsersForTask() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/getAvailableUsersForTask")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.result", is("success")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.dataList", hasSize(greaterThan(0))));
     }
 
     @Test
@@ -156,8 +178,7 @@ public class FsdControllerIntegrationTest {
 
     @Test
     public void testBSaveProject() throws Exception {
-        UserDto userDto = new UserDto(manager.getUserId(), "Shashank", "Lst", "10");
-        ProjectDto projectDto = new ProjectDto(null, "Test Project", "2019-05-30", null, false, 1, userDto);
+        ProjectDto projectDto = new ProjectDto(project.getProjectId(), "Test Project", "2019-05-30", null, false, 1, manager.getUserId());
         mvc.perform(MockMvcRequestBuilders
                 .post("/saveProject")
                 .content(asJsonString(projectDto))
@@ -169,9 +190,8 @@ public class FsdControllerIntegrationTest {
     }
 
     @Test
-    public void testBSaveProjectStartDateIsEndDate() throws Exception {
-        UserDto userDto = new UserDto(manager.getUserId(), "Shashank", "Lst", "10");
-        ProjectDto projectDto = new ProjectDto(null, "Test Project", "2019-05-30", null, true, 1, userDto);
+    public void testBSaveProjectStartDateEndDate() throws Exception {
+        ProjectDto projectDto = new ProjectDto(null, "Test Project", "2019-05-30", "2019-06-30", true, null, manager.getUserId());
         mvc.perform(MockMvcRequestBuilders
                 .post("/saveProject")
                 .content(asJsonString(projectDto))
@@ -179,7 +199,6 @@ public class FsdControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.projectId", greaterThan(0)));
-
     }
 
     @Test
@@ -200,7 +219,7 @@ public class FsdControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.result", is("success")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data", hasSize(greaterThan(0))));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.dataList", hasSize(greaterThan(0))));
     }
 
     @Test
@@ -231,7 +250,19 @@ public class FsdControllerIntegrationTest {
 
     @Test
     public void testCSaveTask() throws Exception {
-        TaskDto taskDto = new TaskDto(null, new ProjectDto(project.getProjectId()), "Test Task", false, 1, null, "2019-05-30", null, new UserDto(manager.getUserId()), null);
+        TaskDto taskDto = new TaskDto(null, project.getProjectId(), "Test Task", false, 1, null, "2019-05-30", null, manager.getUserId(), null);
+        mvc.perform(MockMvcRequestBuilders
+                .post("/saveTask")
+                .content(asJsonString(taskDto))
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.taskId", greaterThan(0)));
+
+    }
+    @Test
+    public void testCUpdateTask() throws Exception {
+        TaskDto taskDto = new TaskDto(taskToUpdate.getTaskId(), project.getProjectId(), "Test Task", false, 1, null, "2019-05-30", null, manager.getUserId(), null);
         mvc.perform(MockMvcRequestBuilders
                 .post("/saveTask")
                 .content(asJsonString(taskDto))
@@ -243,7 +274,7 @@ public class FsdControllerIntegrationTest {
     }
     @Test
     public void testCSaveTaskWIthParent() throws Exception {
-        TaskDto taskDto = new TaskDto(null, new ProjectDto(project.getProjectId()), "Test Task", false, 1, new TaskDto(task.getTaskId(), ""), "2019-05-30", null, new UserDto(manager.getUserId()), null);
+        TaskDto taskDto = new TaskDto(null, project.getProjectId(), "Test Task", false, 1, task.getTaskId(), "2019-05-30", null, manager.getUserId(), null);
         mvc.perform(MockMvcRequestBuilders
                 .post("/saveTask")
                 .content(asJsonString(taskDto))
@@ -255,7 +286,7 @@ public class FsdControllerIntegrationTest {
     }
     @Test
     public void testCSaveTaskWIthParentBlak() throws Exception {
-        TaskDto taskDto = new TaskDto(null, new ProjectDto(project.getProjectId()), "Test Task", false, 1, new TaskDto(null, ""), "2019-05-30", null, new UserDto(manager.getUserId()), null);
+        TaskDto taskDto = new TaskDto(null, project.getProjectId(), "Test Task", false, 1, null, "2019-05-30", null, manager.getUserId(), null);
         mvc.perform(MockMvcRequestBuilders
                 .post("/saveTask")
                 .content(asJsonString(taskDto))
@@ -267,7 +298,7 @@ public class FsdControllerIntegrationTest {
     }
     @Test
     public void testCSaveTaskThisIsParent() throws Exception {
-        TaskDto taskDto = new TaskDto(null, new ProjectDto(project.getProjectId()), "Test Task", true, 1, null, "2019-05-30", null, new UserDto(manager.getUserId()), null);
+        TaskDto taskDto = new TaskDto(null, project.getProjectId(), "Test Task", true, 1, null, "2019-05-30", null, manager.getUserId(), null);
         mvc.perform(MockMvcRequestBuilders
                 .post("/saveTask")
                 .content(asJsonString(taskDto))
@@ -297,33 +328,15 @@ public class FsdControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.result", is("success")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data", hasSize(greaterThan(0))));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.dataList", hasSize(greaterThan(0))));
     }
-
     @Test
-    public void testCDeleteTaskById() throws Exception {
-        Integer taskId = taskToDelete.getTaskId();
-        mvc.perform(MockMvcRequestBuilders.delete("/deleteTaskById/" + taskId)
+    public void testCGetTaskByTaskId() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/getTaskById/" + task.getTaskId())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.result", is("success")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data", is(true)));
-    }
-
-    @Test
-    public void testCDeleteTaskByIdFailure() throws Exception {
-        mvc.perform(MockMvcRequestBuilders.delete("/deleteTaskById/1000")
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.result", is("failure")));
-    }
-
-    @Test
-    public void testCDeleteTaskByIdFailureForZero() throws Exception {
-        mvc.perform(MockMvcRequestBuilders.delete("/deleteTaskById/0")
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.result", is("failure")));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.taskId", is(task.getTaskId())));
     }
 
     private static String asJsonString(final Object obj) {
@@ -334,12 +347,14 @@ public class FsdControllerIntegrationTest {
         }
     }
 
-    private User getMockUser(Integer userId, String firstName, String lastName, String employeeID) {
+    private User getMockUser(Integer userId, String firstName, String lastName, String employeeID, Task task, Project project) {
         User user = new User();
         user.setUserId(userId);
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmployeeId(employeeID);
+        user.setTask(task);
+        user.setProject(project);
         return user;
     }
 

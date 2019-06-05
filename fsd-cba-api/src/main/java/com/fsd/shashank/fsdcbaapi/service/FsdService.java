@@ -4,6 +4,7 @@ import com.fsd.shashank.fsdcbaapi.dto.ProjectDto;
 import com.fsd.shashank.fsdcbaapi.dto.TaskDto;
 import com.fsd.shashank.fsdcbaapi.dto.UserDto;
 import com.fsd.shashank.fsdcbaapi.entity.Task;
+import com.fsd.shashank.fsdcbaapi.entity.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +27,10 @@ public interface FsdService {
 
     List<TaskDto> getAllTasks();
 
-    public Boolean deleteTask(Integer taskId);
+    List<UserDto> getAvailableManagers();
+
+    List<UserDto> getAvailableUsersForTask();
+
+    TaskDto getTaskById(Integer taskId);
 
 }

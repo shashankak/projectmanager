@@ -10,8 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
+@CrossOrigin
 public class FsdController {
     public static final String FAILURE = "failure";
     public static final String SUCCESS = "success";
@@ -24,7 +27,11 @@ public class FsdController {
     private ResponseDto createSuccessResponse(Object data) {
         ResponseDto response = new ResponseDto();
         response.setResult(SUCCESS);
-        response.setObject(data);
+        if (data instanceof List<?>) {
+            response.setObjectList(data);
+        } else {
+            response.setObject(data);
+        }
         return response;
     }
 
@@ -54,6 +61,26 @@ public class FsdController {
             return createSuccessResponse(fsdService.getAllUsers());
         } catch (Exception e) {
             logger.error("There was error while retriving all users. Cause: " + e.getMessage());
+            return createFailureResponse();
+        }
+    }
+
+    @RequestMapping(path = "getAvailableManagers", method = RequestMethod.GET)
+    public ResponseDto getAvailableManagers() {
+        try {
+            return createSuccessResponse(fsdService.getAvailableManagers());
+        } catch (Exception e) {
+            logger.error("There was error while retriving all managers. Cause: " + e.getMessage());
+            return createFailureResponse();
+        }
+    }
+
+    @RequestMapping(path = "getAvailableUsersForTask", method = RequestMethod.GET)
+    public ResponseDto getAvailableUsersForTask() {
+        try {
+            return createSuccessResponse(fsdService.getAvailableUsersForTask());
+        } catch (Exception e) {
+            logger.error("There was error while retriving all users for task. Cause: " + e.getMessage());
             return createFailureResponse();
         }
     }
@@ -125,19 +152,21 @@ public class FsdController {
         try {
             return createSuccessResponse(fsdService.getAllTasks());
         } catch (Exception e) {
-            logger.error("There was error while retriving all tasks. Cause: " + e.getMessage());
+            logger.error("There was error while retrieving all tasks. Cause: " + e.getMessage());
             return createFailureResponse();
         }
     }
 
-    @RequestMapping(path = "deleteTaskById/{taskId}", method = RequestMethod.DELETE)
-    public ResponseDto deleteTaskById(@PathVariable("taskId") Integer taskId) {
+
+
+    @RequestMapping(path = "getTaskById/{taskId}", method = RequestMethod.GET)
+    public ResponseDto getTaskById(@PathVariable("taskId") Integer taskId) {
         ResponseDto response = new ResponseDto();
         response = createFailureResponse();
         try {
-            response = createSuccessResponse(fsdService.deleteTask(taskId));
+            response = createSuccessResponse(fsdService.getTaskById(taskId));
         } catch (Exception e) {
-            logger.error("There was error while deleting task: " + taskId + " Cause: " + e.getMessage());
+            logger.error("There was error while loading task: " + taskId + " Cause: " + e.getMessage());
         }
         return response;
     }

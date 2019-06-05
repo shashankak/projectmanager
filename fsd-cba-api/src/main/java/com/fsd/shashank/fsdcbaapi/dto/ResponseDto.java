@@ -15,4 +15,8 @@ public class ResponseDto {
 
     @JsonProperty("data")
     private Object object;
+
+    @JsonProperty("dataList")
+    private Object objectList;
+
 }
