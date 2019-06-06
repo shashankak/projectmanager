@@ -1,0 +1,22 @@
+.fsd-nav-link {
+  margin-right: 10px;
+  font-size: large;
+}
+
+.container {
+  margin-left: 0;
+}
+
+.nav-div {
+  margin-bottom: 20px;
+}
+
+a {
+  color: black;
+}
+
+.active-link {
+  color: blue;
+  font-weight: bold;
+}
+

@@ -1,0 +1,95 @@
+.example-container {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.example-container > * {
+  width: 100%;
+}
+
+.form-horizontal .control-label {
+  text-align: left;
+}
+
+.btn {
+  margin-left: 5px;
+}
+
+.user-row {
+  border-top-style: none;
+  border-right-style: none;
+  border-bottom-style: dotted;
+  border-left-style: none;
+  border-color: deepskyblue;
+}
+
+.user-row-margin {
+  margin-bottom: 10px;
+}
+
+.user-row-data {
+  background-color: #e3e1e1;
+}
+
+.user-row-data-btn {
+}
+
+.user-row-all-columns {
+  height: 35px;
+  margin-bottom: 20px;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+tr {
+  padding-top: .5em;
+  padding-bottom: .5em;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+  background-color: darkgrey;
+  line-height: 2.3;
+}
+
+hr {
+  display: block;
+  border-width: 2px;
+  border-color: blue;
+}
+
+.sort-filter {
+  margin-bottom: 30px;
+  border-bottom-style: dotted;
+  padding-bottom: 10px;
+  border-color: deepskyblue;
+}
+
+.user-list-inline-btn {
+  line-height: 2.5;
+}
+
+.user-list-inline-div {
+  line-height: 3;
+  background-color: #e3e1e1;
+}
+
+.list-group-item {
+  border: none;
+  padding: 3px 10px;
+}
+
+.list-group-item-user {
+  border: none;
+  border-top-style: none;
+  border-right-style: none;
+  border-bottom-style: dotted;
+  border-left-style: none;
+  border-color: deepskyblue;
+}
+
+.btn {
+  background-color: darkgrey;
+  font-family: cursive;
+}

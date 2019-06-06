@@ -1,0 +1,67 @@
+.label-fsd {
+  font-weight: bolder;
+  margin-bottom: 10px;
+  font-size: larger;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.table-borderless > tbody > tr > td,
+.table-borderless > tbody > tr > th,
+.table-borderless > tfoot > tr > td,
+.table-borderless > tfoot > tr > th,
+.table-borderless > thead > tr > td,
+.table-borderless > thead > tr > th {
+  border: none;
+}
+
+.fsd-css-task-block {
+  background-color: darkgrey;
+  padding: 20px;
+  text-align: center;
+  height: 90%;
+}
+
+.fsd-css-task-block-no-bg {
+  padding: 20px;
+  text-align: left;
+}
+
+td {
+  padding: 10px;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+  background-color: darkgrey;
+  line-height: 2.3;
+}
+
+.btn {
+  background-color: darkgrey;
+  font-family: cursive;
+  margin-left: 5px;
+}
+
+.search-bn {
+  background-color: white;
+  border-radius: 20px;
+  margin-left: -9px;
+}
+
+.table-row {
+  height: 100px;
+}
+
+.table-row-div {
+  height: 100%;
+}
+.list-group-item-user {
+  border: none;
+  border-top-style: none;
+  border-right-style: none;
+  border-bottom-style: dotted;
+  border-left-style: none;
+  border-color: deepskyblue;
+}
+
+

@@ -1,0 +1,89 @@
+<form class="form-horizontal" #userForm="ngForm" (ngSubmit)="onClickSubmit(userForm.value)">
+  <div class="form-group">
+    <label class="control-label col-sm-2" for="firstName">First Name:</label>
+    <div class="col-sm-10">
+      <input type="text" required [(ngModel)]="userInput.firstName" class="form-control" id="firstName"
+             placeholder="Enter First Name" name="firstName" required>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-sm-2" for="lastName">Last Name:</label>
+    <div class="col-sm-10">
+      <input type="text" required [(ngModel)]="userInput.lastName" class="form-control" id="lastName"
+             placeholder="Enter Last Name" name="lastName">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-sm-2" for="employeeId">Last Name:</label>
+    <div class="col-sm-10">
+      <input type="text" required [(ngModel)]="userInput.employeeId" class="form-control" id="employeeId"
+             placeholder="Enter Employee ID" name="employeeId">
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <div class="pull-left">
+        <span class="alert-success">{{infoMessage}}</span>
+        <span class="alert-danger">
+          <ul *ngFor="let error of errorMessages">
+          <li>{{error}}</li>
+        </ul>
+        </span>
+      </div>
+      <div class="pull-right">
+        <button *ngIf="!editing" type="submit" class="btn btn-default">Add</button>
+        <button *ngIf="editing" type="submit" class="btn btn-default">Update</button>
+        <button type="reset" class="btn btn-default" (click)="onReset()">Reset</button>
+      </div>
+    </div>
+  </div>
+</form>
+<hr/>
+
+<div>
+  <ul class="list-group">
+    <li class="list-group-item" style="margin-bottom: 50px">
+      <div>
+        <div class="col-md-12 sort-filter">
+          <div class="col-md-6">
+            <input type="text" required [(ngModel)]="searchText" class="form-control" id="searchText"
+                   placeholder="Search" name="searchText">
+          </div>
+          <div class="col-md-6">
+            <span>Sort:</span>
+            <button type="button" class="btn btn-sm btn-default" (click)="sortByFirstName()">First Name</button>
+            <button type="button" class="btn btn-sm btn-default" (click)="sortByLastName()">Last Name</button>
+            <button type="button" class="btn btn-sm btn-default" (click)="sortByEmployeeID()">ID</button>
+          </div>
+        </div>
+      </div>
+    </li>
+    <li class="list-group-item">
+      <ul class="list-group" *ngFor="let user of users | filter : searchText">
+        <li class="list-group-item list-group-item-user">
+          <ul class="list-group">
+            <li class="list-group-item row">
+              <div class="col-md-9 user-list-inline-div">{{user.firstName}}</div>
+              <div class="col-md-3">
+                <button type="button" class="btn btn-sm btn-block btn-default" (click)="editUser(user)">Edit</button>
+              </div>
+            </li>
+            <li class="list-group-item row">
+              <div class="col-md-9 user-list-inline-div">{{user.lastName}}</div>
+              <div class="col-md-3">
+                <button type="button" class="btn btn-sm btn-block btn-default" (click)="deleteUser(user.userId)">
+                  Delete
+                </button>
+              </div>
+            </li>
+            <li class="list-group-item row">
+              <div class="col-md-9 user-list-inline-div">{{user.employeeId}}</div>
+              <div class="col-md-3"></div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+

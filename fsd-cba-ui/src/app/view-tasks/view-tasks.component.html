@@ -1,0 +1,121 @@
+<div class="row list-group-item-user">
+  <div class="col-sm-6">
+    <div class="form-horizontal">
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="searchProject">Project:</label>
+        <div class="col-sm-8">
+          <input type="text" disabled [(ngModel)]="searchProjectText" class="form-control" id="searchProject"
+                 placeholder="Search Project" name="searchProject" required>
+        </div>
+        <div class="col-sm-2 pull-left search-manager">
+          <button type="button" class="btn btn-default search-bn" data-toggle="modal" data-target="#myModal"
+                  (click)="searchProjects()">Search
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <span>Sort Task by:</span>
+    <button type="button" class="btn btn-default" (click)="sortByStartDate()">Start Date</button>
+    <button type="button" class="btn btn-default" (click)="sortByEndDate()">End Date</button>
+    <button type="button" class="btn btn-default" (click)="sortByPriority()">Priority</button>
+    <button type="button" class="btn btn-default" (click)="sortByCompleted()">Completed</button>
+  </div>
+</div>
+<div class="row" *ngIf="tasks && (tasks.length === 0)">
+  <span class="col-sm-12 alert-danger" style="text-align: center">This Project does not have any tasks!</span>
+</div>
+<div class="row list-group-item-user" *ngFor="let taskRow of tasks">
+  <table class="table table-borderless">
+    <tr>
+      <td width="20%" class="table-row">
+        <div class="table-row-div">
+          <div class="label-fsd">Task</div>
+          <div class="fsd-css-task-block">
+            {{taskRow.task}}
+          </div>
+        </div>
+      </td>
+      <td width="20%" class="table-row">
+        <div class="table-row-div">
+          <div class="label-fsd">Parent</div>
+          <div class="fsd-css-task-block">
+            <span *ngIf="taskRow.parentTaskName">{{taskRow.parentTaskName}}</span>
+            <span *ngIf="!taskRow.parentTaskName">This Task has NO Parent</span>
+          </div>
+        </div>
+      </td>
+      <td class="table-row">
+        <div class="table-row-div">
+          <div class="label-fsd">Prioity</div>
+          <div class="fsd-css-task-block-no-bg">
+            {{taskRow.priority}}
+          </div>
+        </div>
+      </td>
+      <td class="table-row">
+        <div class="table-row-div">
+          <div class="label-fsd">Start Date</div>
+          <div class="fsd-css-task-block-no-bg">
+            {{taskRow.startDate}}
+          </div>
+        </div>
+      </td>
+      <td class="table-row">
+        <div class="table-row-div">
+          <div class="label-fsd">End Date</div>
+          <div class="fsd-css-task-block-no-bg">
+            {{taskRow.endDate}}
+          </div>
+        </div>
+      </td>
+      <td class="table-row">
+        <div class="table-row-div">
+          <div class="label-fsd"></div>
+          <div class="fsd-css-task-block-no-bg">
+            <button class="btn btn-sm" (click)="editTask(taskRow.taskId)">Edit Task</button>
+            <button class="btn btn-sm" [disabled]="taskRow.status === 'completed'" (click)="endTask(taskRow)">End Task
+            </button>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+<div class="modal fade" id="myModal" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="form-group">
+          <label class="control-label col-sm-4" style="margin-top: 7px;" for="filterProject">Select Project:</label>
+          <div class="col-sm-6">
+            <input type="text" required [(ngModel)]="filterProjectText" class="form-control" id="filterProject"
+                   placeholder="Filter" name="filterProject">
+          </div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Projects</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let projectRow of projects | filter : filterProjectText">
+            <td><span (click)="projectSelected(projectRow)" data-dismiss="modal"><a>{{projectRow.project}}</a></span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
