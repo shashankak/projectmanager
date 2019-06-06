@@ -67,7 +67,7 @@ export class FsdServiceService {
   getTaskByTaskId(taskId: number): Observable<TaskResponse> {
     return this.http.get<TaskResponse>(getTaskByIdUrl + taskId)
       .pipe(
-        catchError(this.handleError<UserResponse>('getTaskByTaskId'))
+        catchError(this.handleError<TaskResponse>('getTaskByTaskId'))
       );
   }
 
